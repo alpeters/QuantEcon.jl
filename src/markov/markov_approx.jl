@@ -138,6 +138,55 @@ function _rouwenhorst(p::Real, q::Real, m::Real, Δ::Real, n::Integer)
 end
 
 
+@doc doc"""
+Extended Rouwenhorst's method to approximate non-stationary AR(1) processes,
+following Fella, Gallipoli, Pan (2019).
+
+The process follows
+
+```math
+    y_t = \rho_t y_{t-1} + \epsilon_t
+```
+
+where ``\epsilon_t \sim N (0, \sigma_t^2)``
+
+##### Arguments
+- `N::Integer` : Number of points in markov process
+- `T::Integer` : Length of simulation
+- `ρ::Array or Real` : Persistence parameter(s) in AR(1) process, can be >=1
+- `σ::Array or Real` : Standard deviation(s) of random component of AR(1) process
+- `σ_y0::Real` : Standard deviation of initial y value y_0
+
+##### Returns
+
+- `mc::Vector{MarkovChain}` : Vector of Markov chains (length T) holding
+                                the state values and transition matrix
+
+"""
+function rouwenhorst_ns(N::Integer, T::Integer, ρ::Array, σ::Array, σ_y0::Real)
+    #for input to _rouwenhorst(), because μ is not implemented
+    m = 0.0
+
+    # a cheap way to initialize a vector of MarkovChains
+    MarkovChains = fill(rouwenhorst(N, 0.9, σ[1]), T)
+
+    for t in 1:T
+        σ_yt = sqrt(ρ[t]^2 * σ_y0^2 + σ[t]^2)
+        p  = (1+ρ[t]*σ_y0/σ_yt)/2
+        Θ = [p 1-p; 1-p p]
+        ψ = sqrt(N-1) * σ_yt
+        state_values, p = _rouwenhorst(p, p, m, ψ, N)
+        MarkovChains[t] = MarkovChain(p, state_values)
+        σ_y0 = σ_yt
+    end
+    return MarkovChains
+end
+
+function rouwenhorst_ns(N::Integer, T::Integer, ρ::Real, σ::Real, σ_y0::Real)
+    rouwenhorst_ns(N, T, ρ.*ones(T), σ.*ones(T), σ_y0)
+end
+
+
 # These are to help me order types other than vectors
 @inline _emcd_lt(a::T, b::T) where {T} = isless(a, b)
 # @inline _emcd_lt(a::Vector{T}, b::Vector{T}) where {T} = Base.lt(Base.Order.Lexicographic, a, b)
