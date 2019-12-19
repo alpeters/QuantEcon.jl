@@ -51,7 +51,7 @@ export
 # mc_tools
     MarkovChain, MCIndSimulator, MCSimulator,
     stationary_distributions,
-    simulate, simulate!, simulate_indices, simulate_indices!,
+    simulate, simulate_ns, simulate!, simulate_indices, simulate_indices!,
     period, is_irreducible, is_aperiodic, recurrent_classes,
     communication_classes, n_states,
     discrete_var, Even, Quantile, Quadrature,

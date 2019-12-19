@@ -448,3 +448,33 @@ function simulate_indices!(X::Union{AbstractVector{T},AbstractMatrix{T}},
     end
     X
 end
+
+@doc doc"""
+Simulate one sample path of the non-stationary vector of Markov chains `mcs`.
+The resulting vector has the state values of `mcs` as elements.
+
+### Arguments
+
+- `mcs::Vector{MarkovChain}` : Vector of MarkovChains.
+- `;init::Int` : Index of initial state
+
+### Returns
+
+- `X::Vector` : Vector containing the sample path, with length
+  length(mcs)+1 (includes initial state)
+"""
+function simulate_ns(mcs::Vector, init::Int)
+    ind_0 = init
+    ind = zeros(Int, length(mcs))
+    X = zeros(Real, length(mcs))
+
+    for t in eachindex(mcs)
+        X[t] = simulate(mcs[t], 2, init = ind_0)[2]
+        ind[t] = findmin( abs.(mcs[t].state_values .- X[t]) )[2]
+        if t < length(mcs)
+            ind_0 = ind[t] #findmin( abs.(mcs[t].state_values .- X[t]) )[2]
+        end
+    end
+    ind = [init; ind]
+    X = [mcs[1].state_values[init]; X]
+end
